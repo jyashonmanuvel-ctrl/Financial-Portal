@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yash Finance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Sans:wght@500;700&display=swap" rel="stylesheet">
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">Y</div>
+      <div class="brand-name">Yash Finance</div>
+    </div>
+    <nav class="navlist">
+      <button class="navitem active" data-page="dashboard">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Dashboard
+      </button>
+      <button class="navitem" data-page="asset">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 3"/></svg>
+        Asset Allocation
+      </button>
+      <button class="navitem" data-page="expense">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></svg>
+        Expense &amp; Income
+      </button>
+      <button class="navitem" data-page="budget">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/></svg>
+        Budget
+      </button>
+    </nav>
+    <div class="sidebar-spacer"></div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input id="globalSearch" placeholder="Search transactions...">
+      </div>
+      <div class="topbar-spacer"></div>
+
+      <button class="google-btn" id="googleSignInBtn" title="Sign in with Google">
+        <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.9-2.26 5.36-4.78 7.02l7.73 6c4.51-4.18 7.09-10.36 7.09-17.49z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        <span>Sign in with Google</span>
+      </button>
+      <button class="google-btn signed-in" id="googleSignOutBtn" style="display:none;" title="Sign out of Google">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        <span>Sign out</span>
+      </button>
+      <div class="icon-btn-round-info" id="googleSetupInfoBtn" title="How to set up Google Sign-In">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      </div>
+
+      <div class="header-divider"></div>
+
+      <div class="icon-btn" id="driveSaveBtn" title="Save all portal data to Google Drive">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 15v3a2 2 0 01-2 2H7a2 2 0 01-2-2v-3"/><path d="M12 3v10m0 0l-4-4m4 4l4-4"/></svg>
+      </div>
+      <div class="icon-btn" id="driveLoadBtn" title="Load all portal data from Google Drive">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9V6a2 2 0 00-2-2H7a2 2 0 00-2 2v3"/><path d="M12 21V11m0 0l-4 4m4-4l4 4"/></svg>
+      </div>
+
+      <div class="header-divider"></div>
+
+      <div class="icon-btn" title="Notifications">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+        <span class="dot"></span>
+      </div>
+      <div class="icon-btn" title="Settings">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15 1.65 1.65 0 003.17 14H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09c0 .68.39 1.29 1 1.51.6.24 1.3.12 1.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06c-.45.52-.57 1.22-.33 1.82.22.61.83 1 1.51 1H21a2 2 0 010 4h-.09c-.68 0-1.29.39-1.51 1z"/></svg>
+      </div>
+      <div class="icon-btn" id="profileExportBtn" title="Export all portal data (JSON or Excel)">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
+      </div>
+      <div class="icon-btn" id="profileImportBtn" title="Import all portal data (Excel, CSV or JSON)">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21V9M7 14l5-5 5 5"/><path d="M4 3h16"/></svg>
+      </div>
+      <input type="file" id="profileImportInput" accept=".xlsx,.xls,.csv,.json,application/json" style="display:none;">
+      <div class="user-chip">
+        <div class="avatar" id="chipAvatar">AN</div>
+        <div><div class="name" id="chipName">Anitha</div><div class="role" id="chipRole">Admin</div></div>
+      </div>
+    </div>
+
+    <!-- ============ DASHBOARD ============ -->
+    <section class="page active" id="page-dashboard">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">Family Finance</div>
+          <div class="page-title">Overview</div>
+          <div class="page-sub">Your household's financial picture at a glance</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-inner">
+          <div class="chart-head">
+            <div>
+              <div class="chart-title">Net Worth Growth</div>
+              <div class="chart-value" id="netWorthValue">₹10,39,020</div>
+            </div>
+            <div class="range-toggle" id="rangeToggle">
+              <button class="active" data-range="6M">6M</button>
+              <button data-range="1Y">1Y</button>
+              <button data-range="3Y">3Y</button>
+              <button data-range="All">All</button>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <svg id="netWorthChart" viewBox="0 0 900 220" width="100%" height="220" preserveAspectRatio="none"></svg>
+            <div class="chart-labels" id="chartLabels"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-inner" style="padding-bottom:8px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <div class="chart-title" style="margin-bottom:0;">Monthly Snapshots</div>
+          <div class="year-pick">
+            <button id="snapYearPrev"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <span id="snapYearLabel">—</span>
+            <button id="snapYearNext"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 18l6-6-6-6"/></svg></button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align:left;">Month</th>
+                <th>Expenses</th>
+                <th>Net Worth</th>
+                <th style="text-align:right;">Change</th>
+              </tr>
+            </thead>
+            <tbody id="snapshotBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination-bar">
+          <div class="pagination-info" id="snapPgInfo"></div>
+          <div class="pagination-controls" id="snapPgControls"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ASSET ALLOCATION ============ -->
+    <section class="page" id="page-asset">
+      <div class="page-head">
+        <div>
+          <div class="page-title">Asset Allocation</div>
+          <div class="page-sub">Track your assets month by month</div>
+        </div>
+        <div class="head-actions">
+          <div class="year-pick">
+            <button id="assetYearPrev"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <span id="assetYearLabel">2026</span>
+            <button id="assetYearNext"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 18l6-6-6-6"/></svg></button>
+          </div>
+          <button class="icon-btn-ghost" id="assetExportBtn" title="Export Asset Allocation data (JSON or Excel)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
+            Export
+          </button>
+          <button class="icon-btn-ghost" id="assetImportBtn" title="Import Asset Allocation data (Excel, CSV or JSON)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 21V9M7 14l5-5 5 5"/><path d="M4 3h16"/></svg>
+            Import
+          </button>
+          <input type="file" id="assetImportInput" accept=".xlsx,.xls,.csv,.json,application/json" style="display:none;">
+          <button class="btn-primary" id="openAssetModal">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>
+            Add Monthly Snapshot
+          </button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="bulk-bar" id="assetBulkBar">
+          <div class="txt"><span id="assetBulkCount">0</span> selected</div>
+          <div class="actions">
+            <button class="bulk-clear" id="assetBulkClear">Clear</button>
+            <button class="bulk-delete" id="assetBulkDelete">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+              Delete
+            </button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" class="headchk" id="assetHeadChk"></th>
+                <th style="text-align:left;">Month</th>
+                <th>Cash</th>
+                <th>Debt Fund</th>
+                <th>MF</th>
+                <th>Gold (Dig)</th>
+                <th>Gold (Phys)</th>
+                <th>Stocks</th>
+                <th>Total</th>
+                <th style="text-align:right;">Difference</th>
+                <th class="col-actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="assetBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination-bar">
+          <div class="pagination-info" id="assetPgInfo"></div>
+          <div class="pagination-controls" id="assetPgControls"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ EXPENSE & INCOME ============ -->
+    <section class="page" id="page-expense">
+      <div class="page-head">
+        <div>
+          <div class="page-title">Expense &amp; Income</div>
+          <div class="page-sub">Track and compare your monthly household expenses</div>
+        </div>
+        <div class="head-actions">
+          <div class="year-pick">
+            <button id="expYearPrev"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <span id="expYearLabel">2026</span>
+            <button id="expYearNext"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 18l6-6-6-6"/></svg></button>
+          </div>
+          <button class="icon-btn-ghost" id="expExportBtn" title="Export Expense & Income data (JSON or Excel)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
+            Export
+          </button>
+          <button class="icon-btn-ghost" id="expImportBtn" title="Import Expense & Income data (Excel, CSV or JSON)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 21V9M7 14l5-5 5 5"/><path d="M4 3h16"/></svg>
+            Import
+          </button>
+          <input type="file" id="expImportInput" accept=".xlsx,.xls,.csv,.json,application/json" style="display:none;">
+          <button class="btn-primary" id="openExpenseModal">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>
+            Add Expence &amp; income
+          </button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="bulk-bar" id="expBulkBar">
+          <div class="txt"><span id="expBulkCount">0</span> selected</div>
+          <div class="actions">
+            <button class="bulk-clear" id="expBulkClear">Clear</button>
+            <button class="bulk-delete" id="expBulkDelete">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+              Delete
+            </button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr id="expenseTableHead"><th class="col-check"><input type="checkbox" class="headchk" id="expHeadChk"></th><th style="text-align:left;">Month</th></tr></thead>
+            <tbody id="expenseBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination-bar">
+          <div class="pagination-info" id="expPgInfo"></div>
+          <div class="pagination-controls" id="expPgControls"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ BUDGET ============ -->
+    <section class="page" id="page-budget">
+      <div class="page-head">
+        <div>
+          <div class="page-title">Budget</div>
+          <div class="page-sub">Track and compare your monthly household expenses</div>
+        </div>
+        <div class="head-actions">
+          <div class="year-pick">
+            <button id="budYearPrev"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <span id="budYearLabel">2026</span>
+            <button id="budYearNext"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 18l6-6-6-6"/></svg></button>
+          </div>
+          <button class="icon-btn-ghost" id="budExportBtn" title="Export Budget data (JSON or Excel)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
+            Export
+          </button>
+          <button class="icon-btn-ghost" id="budImportBtn" title="Import Budget data (Excel, CSV or JSON)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 21V9M7 14l5-5 5 5"/><path d="M4 3h16"/></svg>
+            Import
+          </button>
+          <input type="file" id="budImportInput" accept=".xlsx,.xls,.csv,.json,application/json" style="display:none;">
+          <button class="btn-primary" id="openBudgetModal">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>
+            Add New Budget
+          </button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="bulk-bar" id="budBulkBar">
+          <div class="txt"><span id="budBulkCount">0</span> selected</div>
+          <div class="actions">
+            <button class="bulk-clear" id="budBulkClear">Clear</button>
+            <button class="bulk-delete" id="budBulkDelete">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+              Delete
+            </button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr id="budgetTableHead"><th class="col-check"><input type="checkbox" class="headchk" id="budHeadChk"></th><th style="text-align:left;">Month</th></tr></thead>
+            <tbody id="budgetBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination-bar">
+          <div class="pagination-info" id="budPgInfo"></div>
+          <div class="pagination-controls" id="budPgControls"></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- ============ MODAL: ADD ASSET ALLOCATION ============ -->
+<div class="overlay" id="assetOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="assetModalTitle">Add Asset Allocation</h2>
+        <p id="assetModalMonthLabel">Sep 2026</p>
+      </div>
+      <button class="modal-close" data-close="assetOverlay">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field" style="margin-bottom:18px;">
+        <label>Month</label>
+        <input type="text" id="af_month">
+      </div>
+      <div id="assetFieldsWrap"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="save-btn" id="assetSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: ADD INCOME & EXPENSE ============ -->
+<div class="overlay" id="expenseOverlay">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-head">
+      <div>
+        <h2 id="expenseModalTitle">Add Income &amp; expence</h2>
+        <p id="expModalMonth">New month</p>
+      </div>
+      <button class="modal-close" data-close="expenseOverlay">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field" style="margin-bottom:4px;">
+        <label>Month</label>
+        <input type="text" id="exp_month" placeholder="e.g. Jun 2026">
+      </div>
+      <div class="section-block" style="margin-top:16px; padding-top:16px;">
+        <div class="section-head">
+          <div class="section-title"><span class="ic income">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>
+          </span>Income</div>
+          <div class="section-total income"><div class="k">Total Income</div><div class="v" id="incomeTotal">₹0</div></div>
+        </div>
+        <div id="incomeRows"></div>
+        <button class="add-link" id="addIncomeRow">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
+          Add Income
+        </button>
+      </div>
+
+      <div class="section-block">
+        <div class="section-head">
+          <div class="section-title"><span class="ic expense">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h2l2.6 12.6a2 2 0 002 1.6h8.8a2 2 0 002-1.6L21 7H5.2"/></svg>
+          </span>Expenses</div>
+          <div class="section-total expense"><div class="k">Total Expenses</div><div class="v" id="expenseTotal">₹0</div></div>
+        </div>
+        <div id="expenseRows"></div>
+        <button class="add-link" id="addExpenseRow">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
+          Add New Category
+        </button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="save-btn" id="expenseSaveBtn">
+        Save
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M20 6L9 17l-5-5"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: ADD BUDGET ============ -->
+<div class="overlay" id="budgetOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="budgetModalTitle">Add New Budget</h2>
+        <p>Set spending limits per category</p>
+      </div>
+      <button class="modal-close" data-close="budgetOverlay">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field" style="margin-bottom:16px;">
+        <label>Month</label>
+        <input type="text" id="bf_month" placeholder="e.g. Jun 2026">
+      </div>
+      <div id="budgetRows"></div>
+      <button class="add-link" id="addBudgetRow">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
+        Add New Category
+      </button>
+    </div>
+    <div class="modal-foot">
+      <button class="save-btn" id="budgetSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ============ MODAL: GOOGLE SIGN-IN SETUP GUIDE ============ -->
+<div class="overlay" id="googleSetupOverlay">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-head">
+      <div>
+        <h2>Set up Google Sign-In &amp; Drive Save</h2>
+        <p>One-time setup, done by whoever owns this file</p>
+      </div>
+      <button class="modal-close" data-close="googleSetupOverlay">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="setup-note">
+        This app is a single HTML file with no server of its own, so Google Sign-In needs a free Google Cloud
+        <b>OAuth Client ID</b> before it will work. It also only works when the file is opened over <b>http://</b> or
+        <b>https://</b> (e.g. hosted on GitHub Pages, Netlify, or your own site) — Google does not allow sign-in on a
+        file opened directly from disk (<code>file://</code>).
+      </div>
+      <div class="setup-step">
+        <div class="num">1</div>
+        <div class="body">
+          <h4>Open Google Cloud Console</h4>
+          <p>Go to <code>console.cloud.google.com</code> and create a new project (or pick an existing one) from the project dropdown at the top.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <div class="num">2</div>
+        <div class="body">
+          <h4>Configure the OAuth consent screen</h4>
+          <p>Under <code>APIs &amp; Services → OAuth consent screen</code>, choose <b>External</b>, fill in an app name and your email, and save. You can leave it in "Testing" mode and add your own Google account under <b>Test users</b>.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <div class="num">3</div>
+        <div class="body">
+          <h4>Enable the Google Drive API</h4>
+          <p>Under <code>APIs &amp; Services → Library</code>, search for <b>Google Drive API</b> and click <b>Enable</b>. This lets the app save/load your data as a file in your Drive.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <div class="num">4</div>
+        <div class="body">
+          <h4>Create an OAuth Client ID</h4>
+          <p>Under <code>APIs &amp; Services → Credentials → Create Credentials → OAuth client ID</code>, choose <b>Web application</b>.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <div class="num">5</div>
+        <div class="body">
+          <h4>Add your site's URL as an authorized origin</h4>
+          <p>Under <b>Authorized JavaScript origins</b>, add the exact URL where this file will be hosted, e.g. <code>https://yourname.github.io</code>. No path, no trailing slash.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <div class="num">6</div>
+        <div class="body">
+          <h4>Copy the Client ID into this file</h4>
+          <p>Copy the generated <b>Client ID</b> (ends in <code>.apps.googleusercontent.com</code>). Open this HTML file in a text editor, find <code>GOOGLE_CLIENT_ID</code> near the top of the <code>&lt;script&gt;</code> section, and paste it in between the quotes.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <div class="num">7</div>
+        <div class="body">
+          <h4>Host it and reload</h4>
+          <p>Upload the file to the site whose URL you added in step 5, open it there, and click <b>Sign in with Google</b>. Once signed in, the cloud icons in the header will save/load your data as a file in your Google Drive.</p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="save-btn" data-close="googleSetupOverlay">Got it</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js" defer></script>
+</body>
+</html>

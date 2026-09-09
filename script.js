@@ -425,6 +425,7 @@ function renderChart(rangeSel){
     return `<span style="${show?'':'visibility:hidden;'}">${mon} '${yr.slice(2)}</span>`;
   }).join('');
   document.getElementById('netWorthValue').textContent = inr(assetTotal(assetRows[assetRows.length-1]));
+  scheduleCloudSave();
 }
 
 document.getElementById('rangeToggle').addEventListener('click', (e)=>{
@@ -463,6 +464,7 @@ function renderSnapshots(){
   }).join('') || `<tr><td colspan="4" style="text-align:center; color:var(--text-faint); padding:28px;">No snapshots yet — add one from Asset Allocation</td></tr>`;
 
   renderPagination('snapPgInfo','snapPgControls', pg, (p)=>{ state.page=p; renderSnapshots(); });
+  scheduleCloudSave();
 }
 document.getElementById('snapYearPrev').addEventListener('click', ()=>{
   const source = [...assetRows].reverse();
@@ -522,6 +524,7 @@ function renderAssets(){
     tr.querySelector('.edit-icon').addEventListener('click', ()=> openAssetEditModal(id));
     tr.querySelector('.del-icon').addEventListener('click', ()=> deleteAssetRow(id));
   });
+  scheduleCloudSave();
 }
 function deleteAssetRow(id){
   const row = assetRows.find(r=>r._id===id);
@@ -625,6 +628,7 @@ function renderExpenses(){
       renderExpenses();
     });
   }
+  scheduleCloudSave();
 }
 function deleteExpenseRow(id){
   const row = expenseRowsData.find(r=>r._id===id);
@@ -708,6 +712,7 @@ function renderBudget(){
     tr.querySelector('.edit-icon').addEventListener('click', ()=> openBudgetEditModal(id));
     tr.querySelector('.del-icon').addEventListener('click', ()=> deleteBudgetRow(id));
   });
+  scheduleCloudSave();
 }
 function deleteBudgetRow(id){
   const row = budgetRowsData.find(r=>r._id===id);
@@ -1269,6 +1274,16 @@ const FIRESTORE_COLLECTION = 'yashFinancePortals';
 
 let firebaseUser = null;
 let firestoreDb = null;
+let cloudSaveTimer = null;
+let isSyncingFromCloud = false;
+
+/* Called at the end of every render*() function — i.e. after any data change.
+   Debounced so rapid edits (typing, multiple field changes) collapse into one write. */
+function scheduleCloudSave(){
+  if(!firebaseUser || isSyncingFromCloud) return;
+  clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = setTimeout(()=> saveToFirestore(true), 1200);
+}
 
 function isFirebaseConfigured(){
   return !!firebaseConfig.apiKey && firebaseConfig.apiKey.indexOf('PASTE_')!==0
@@ -1282,7 +1297,10 @@ function initFirebase(){
     firebase.auth().onAuthStateChanged(user=>{
       firebaseUser = user;
       updateFirebaseUI();
-      if(user) toast('Signed in as '+(user.displayName || user.email));
+      if(user){
+        toast('Signed in as '+(user.displayName || user.email));
+        loadFromFirestore(true); /* auto-load this account's saved data right after sign-in */
+      }
     });
   }catch(err){ console.error('Firebase init error:', err); }
 }
@@ -1334,33 +1352,36 @@ function updateFirebaseUI(){
 /* ---- Firestore save/load. Each signed-in user's data lives at
    yashFinancePortals/{their uid} — set Firestore security rules so only that
    uid can read/write its own document (see the setup guide for the rule). ---- */
-async function saveToFirestore(){
-  if(!firebaseUser){ toast('Sign in first to save to the cloud'); return; }
+async function saveToFirestore(silent){
+  if(!firebaseUser){ if(!silent) toast('Sign in first to save to the cloud'); return; }
   try{
     await firestoreDb.collection(FIRESTORE_COLLECTION).doc(firebaseUser.uid).set(buildPortalExportObject());
-    toast('Saved to your Firebase account');
+    if(!silent) toast('Saved to your Firebase account');
   }catch(err){
     console.error(err);
     toast('Cloud save failed: '+err.message);
   }
 }
-async function loadFromFirestore(){
-  if(!firebaseUser){ toast('Sign in first to load from the cloud'); return; }
+async function loadFromFirestore(silent){
+  if(!firebaseUser){ if(!silent) toast('Sign in first to load from the cloud'); return; }
+  isSyncingFromCloud = true; /* pause auto-save while we apply loaded data, so we don't immediately re-save it or race a stale write */
   try{
     const snap = await firestoreDb.collection(FIRESTORE_COLLECTION).doc(firebaseUser.uid).get();
-    if(!snap.exists){ toast('No saved data found yet — use the save icon first'); return; }
-    if(!applyPortalJSONImport(snap.data())){ toast('Saved data format not recognized'); return; }
-    toast('Loaded from your Firebase account');
+    if(!snap.exists){ if(!silent) toast('No saved data found yet — use the save icon first'); return; }
+    if(!applyPortalJSONImport(snap.data())){ if(!silent) toast('Saved data format not recognized'); return; }
+    if(!silent) toast('Loaded from your Firebase account');
   }catch(err){
     console.error(err);
-    toast('Cloud load failed: '+err.message);
+    if(!silent) toast('Cloud load failed: '+err.message);
+  } finally {
+    isSyncingFromCloud = false;
   }
 }
 document.getElementById('firebaseSignInBtn').addEventListener('click', onFirebaseSignInClick);
 document.getElementById('firebaseSignOutBtn').addEventListener('click', signOutFirebase);
 document.getElementById('firebaseSetupInfoBtn').addEventListener('click', ()=> openModal('firebaseSetupOverlay'));
-document.getElementById('cloudSaveBtn').addEventListener('click', saveToFirestore);
-document.getElementById('cloudLoadBtn').addEventListener('click', loadFromFirestore);
+document.getElementById('cloudSaveBtn').addEventListener('click', ()=> saveToFirestore());
+document.getElementById('cloudLoadBtn').addEventListener('click', ()=> loadFromFirestore());
 updateFirebaseUI();
 
 /* ================= INIT ================= */

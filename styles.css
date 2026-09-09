@@ -81,7 +81,7 @@
   .user-chip .name{font-size:13.5px; font-weight:700; line-height:1.2;}
   .user-chip .role{font-size:11.5px; color:var(--text-faint); line-height:1.2;}
 
-  /* Google sign-in + Drive */
+  /* Google sign-in (via Firebase) + cloud save */
   .header-divider{width:1px; align-self:stretch; background:var(--border); margin:2px 2px;}
   .google-btn{
     display:flex; align-items:center; gap:8px; height:38px; padding:0 14px; border-radius:10px;

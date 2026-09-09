@@ -6,7 +6,10 @@
 <title>Yash Finance</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Sans:wght@500;700&display=swap" rel="stylesheet">
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -50,24 +53,24 @@
       </div>
       <div class="topbar-spacer"></div>
 
-      <button class="google-btn" id="googleSignInBtn" title="Sign in with Google">
+      <button class="google-btn" id="firebaseSignInBtn" title="Sign in with Google (via Firebase)">
         <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.9-2.26 5.36-4.78 7.02l7.73 6c4.51-4.18 7.09-10.36 7.09-17.49z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
         <span>Sign in with Google</span>
       </button>
-      <button class="google-btn signed-in" id="googleSignOutBtn" style="display:none;" title="Sign out of Google">
+      <button class="google-btn signed-in" id="firebaseSignOutBtn" style="display:none;" title="Sign out">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
         <span>Sign out</span>
       </button>
-      <div class="icon-btn-round-info" id="googleSetupInfoBtn" title="How to set up Google Sign-In">
+      <div class="icon-btn-round-info" id="firebaseSetupInfoBtn" title="How to set up Firebase Sign-In &amp; cloud save">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
       </div>
 
       <div class="header-divider"></div>
 
-      <div class="icon-btn" id="driveSaveBtn" title="Save all portal data to Google Drive">
+      <div class="icon-btn" id="cloudSaveBtn" title="Save all portal data to your Firebase account">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 15v3a2 2 0 01-2 2H7a2 2 0 01-2-2v-3"/><path d="M12 3v10m0 0l-4-4m4 4l4-4"/></svg>
       </div>
-      <div class="icon-btn" id="driveLoadBtn" title="Load all portal data from Google Drive">
+      <div class="icon-btn" id="cloudLoadBtn" title="Load all portal data from your Firebase account">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9V6a2 2 0 00-2-2H7a2 2 0 00-2 2v3"/><path d="M12 21V11m0 0l-4 4m4-4l4 4"/></svg>
       </div>
 
@@ -440,76 +443,84 @@
 <div class="toast" id="toast"></div>
 
 <!-- ============ MODAL: GOOGLE SIGN-IN SETUP GUIDE ============ -->
-<div class="overlay" id="googleSetupOverlay">
+<div class="overlay" id="firebaseSetupOverlay">
   <div class="modal" style="max-width:600px;">
     <div class="modal-head">
       <div>
-        <h2>Set up Google Sign-In &amp; Drive Save</h2>
+        <h2>Set up Firebase Sign-In &amp; Cloud Save</h2>
         <p>One-time setup, done by whoever owns this file</p>
       </div>
-      <button class="modal-close" data-close="googleSetupOverlay">
+      <button class="modal-close" data-close="firebaseSetupOverlay">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div class="modal-body">
       <div class="setup-note">
-        This app is a single HTML file with no server of its own, so Google Sign-In needs a free Google Cloud
-        <b>OAuth Client ID</b> before it will work. It also only works when the file is opened over <b>http://</b> or
-        <b>https://</b> (e.g. hosted on GitHub Pages, Netlify, or your own site) — Google does not allow sign-in on a
-        file opened directly from disk (<code>file://</code>).
+        This app is a static site with no server of its own, so cloud save needs a free <b>Firebase</b> project
+        before it will work. It also only works when the file is opened over <b>http://</b> or <b>https://</b>
+        (e.g. hosted on GitHub Pages, Netlify, or your own site) — sign-in is not allowed on a file opened
+        directly from disk (<code>file://</code>).
       </div>
       <div class="setup-step">
         <div class="num">1</div>
         <div class="body">
-          <h4>Open Google Cloud Console</h4>
-          <p>Go to <code>console.cloud.google.com</code> and create a new project (or pick an existing one) from the project dropdown at the top.</p>
+          <h4>Create a Firebase project</h4>
+          <p>Go to <code>console.firebase.google.com</code>, click <b>Add project</b>, name it (e.g. "Yash Finance"), and finish the wizard. You can leave Google Analytics off — it isn't needed here.</p>
         </div>
       </div>
       <div class="setup-step">
         <div class="num">2</div>
         <div class="body">
-          <h4>Configure the OAuth consent screen</h4>
-          <p>Under <code>APIs &amp; Services → OAuth consent screen</code>, choose <b>External</b>, fill in an app name and your email, and save. You can leave it in "Testing" mode and add your own Google account under <b>Test users</b>.</p>
+          <h4>Register a Web app</h4>
+          <p>On the project overview page, click the <b>&lt;/&gt;</b> (Web) icon to add a web app. Give it a nickname and click <b>Register app</b>. You don't need Firebase Hosting for this step.</p>
         </div>
       </div>
       <div class="setup-step">
         <div class="num">3</div>
         <div class="body">
-          <h4>Enable the Google Drive API</h4>
-          <p>Under <code>APIs &amp; Services → Library</code>, search for <b>Google Drive API</b> and click <b>Enable</b>. This lets the app save/load your data as a file in your Drive.</p>
+          <h4>Copy the config object into this file</h4>
+          <p>Firebase shows a code snippet with a <code>firebaseConfig</code> object (apiKey, authDomain, projectId, etc). Open <code>script.js</code> in a text editor, find <code>const firebaseConfig = { ... }</code> near the top of the "FIREBASE SIGN-IN" section, and replace each placeholder value with the matching one from Firebase.</p>
         </div>
       </div>
       <div class="setup-step">
         <div class="num">4</div>
         <div class="body">
-          <h4>Create an OAuth Client ID</h4>
-          <p>Under <code>APIs &amp; Services → Credentials → Create Credentials → OAuth client ID</code>, choose <b>Web application</b>.</p>
+          <h4>Enable Google as a sign-in method</h4>
+          <p>In the Firebase console sidebar go to <b>Build → Authentication → Get started</b>, open the <b>Sign-in method</b> tab, click <b>Google</b>, toggle it <b>Enable</b>, pick a support email, and save. Firebase sets up the OAuth client for you automatically — no separate Google Cloud Console step needed.</p>
         </div>
       </div>
       <div class="setup-step">
         <div class="num">5</div>
         <div class="body">
-          <h4>Add your site's URL as an authorized origin</h4>
-          <p>Under <b>Authorized JavaScript origins</b>, add the exact URL where this file will be hosted, e.g. <code>https://yourname.github.io</code>. No path, no trailing slash.</p>
+          <h4>Create a Firestore database</h4>
+          <p>Sidebar → <b>Build → Firestore Database → Create database</b>. Choose a location close to you and start in <b>test mode</b> for now — you'll lock it down in the next step.</p>
         </div>
       </div>
       <div class="setup-step">
         <div class="num">6</div>
         <div class="body">
-          <h4>Copy the Client ID into this file</h4>
-          <p>Copy the generated <b>Client ID</b> (ends in <code>.apps.googleusercontent.com</code>). Open this HTML file in a text editor, find <code>GOOGLE_CLIENT_ID</code> near the top of the <code>&lt;script&gt;</code> section, and paste it in between the quotes.</p>
+          <h4>Restrict access with a security rule</h4>
+          <p>In Firestore's <b>Rules</b> tab, replace the contents with the rule below and click <b>Publish</b>. This makes sure each signed-in person can only ever read or write their own saved data:</p>
+          <p><code>rules_version = '2';<br>service cloud.firestore {<br>&nbsp;&nbsp;match /databases/{database}/documents {<br>&nbsp;&nbsp;&nbsp;&nbsp;match /yashFinancePortals/{uid} {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allow read, write: if request.auth != null &amp;&amp; request.auth.uid == uid;<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>}</code></p>
         </div>
       </div>
       <div class="setup-step">
         <div class="num">7</div>
         <div class="body">
+          <h4>Add your hosted site as an authorized domain</h4>
+          <p>Back in <b>Authentication → Settings → Authorized domains</b>, add the domain where you'll host this file (e.g. <code>yourname.github.io</code>) — domain only, no <code>https://</code> and no path.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <div class="num">8</div>
+        <div class="body">
           <h4>Host it and reload</h4>
-          <p>Upload the file to the site whose URL you added in step 5, open it there, and click <b>Sign in with Google</b>. Once signed in, the cloud icons in the header will save/load your data as a file in your Google Drive.</p>
+          <p>Upload the files to the domain you added in step 7, open it there, and click <b>Sign in with Google</b>. Once signed in, the cloud save/load icons in the header will save and load your data through Firestore.</p>
         </div>
       </div>
     </div>
     <div class="modal-foot">
-      <button class="save-btn" data-close="googleSetupOverlay">Got it</button>
+      <button class="save-btn" data-close="firebaseSetupOverlay">Got it</button>
     </div>
   </div>
 </div>

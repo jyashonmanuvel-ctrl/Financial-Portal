@@ -1253,75 +1253,70 @@ document.getElementById('profileImportInput').addEventListener('change', e=>{
   e.target.value = '';
 });
 
-/* ================= GOOGLE SIGN-IN + DRIVE SAVE ================= */
-/* To enable: paste your OAuth Client ID below (see the "How to set up" (ⓘ) button in the header
-   for step-by-step instructions). Must be served over http(s) — Google does not allow sign-in
-   from a file opened directly off disk (file://). */
-const GOOGLE_CLIENT_ID = 'PASTE_YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com';
-const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
-const DRIVE_FILE_NAME = 'yash-finance-portal-data.json';
+/* ================= FIREBASE SIGN-IN + FIRESTORE SAVE ================= */
+/* To enable: paste your Firebase project's config below (see the "How to set up" (ⓘ) button
+   in the header for step-by-step instructions). Must be served over http(s) — Firebase does
+   not allow sign-in from a file opened directly off disk (file://). */
+const firebaseConfig = {
+  apiKey: "AIzaSyBVUkHjVaYecnVANUK543ukbwxCZyJLPX4",
+  authDomain: "financial-tracker-70cec.firebaseapp.com",
+  projectId: "financial-tracker-70cec",
+  storageBucket: "financial-tracker-70cec.firebasestorage.app",
+  messagingSenderId: "49549236214",
+  appId: "1:49549236214:web:9e4d9709c0610d014519d7"
+};
+const FIRESTORE_COLLECTION = 'yashFinancePortals';
 
-let googleProfile = null;
-let driveAccessToken = null;
-let driveTokenClient = null;
+let firebaseUser = null;
+let firestoreDb = null;
 
-function isGoogleConfigured(){ return !!GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.indexOf('PASTE_')!==0; }
-
-function decodeGoogleJWT(token){
-  try{
-    const base64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
-    const json = decodeURIComponent(atob(base64).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-    return JSON.parse(json);
-  }catch(e){ return null; }
+function isFirebaseConfigured(){
+  return !!firebaseConfig.apiKey && firebaseConfig.apiKey.indexOf('PASTE_')!==0
+      && !!firebaseConfig.projectId && firebaseConfig.projectId.indexOf('PASTE_')!==0;
 }
-function handleGoogleCredential(response){
-  const payload = decodeGoogleJWT(response.credential);
-  if(!payload) return;
-  googleProfile = {name:payload.name, email:payload.email, picture:payload.picture};
-  updateGoogleUI();
-  toast('Signed in as '+payload.name);
-}
-function initGoogleAuth(){
-  if(!isGoogleConfigured() || typeof google==='undefined' || !google.accounts) return;
+function initFirebase(){
+  if(!isFirebaseConfigured() || typeof firebase==='undefined') return;
   try{
-    google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID, callback:handleGoogleCredential, auto_select:false});
-    driveTokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: DRIVE_SCOPE,
-      callback: (resp)=>{
-        if(resp && resp.access_token){ driveAccessToken = resp.access_token; updateGoogleUI(); toast('Google Drive connected'); }
-        else toast('Google Drive connection was cancelled or denied');
-      }
+    firebase.initializeApp(firebaseConfig);
+    firestoreDb = firebase.firestore();
+    firebase.auth().onAuthStateChanged(user=>{
+      firebaseUser = user;
+      updateFirebaseUI();
+      if(user) toast('Signed in as '+(user.displayName || user.email));
     });
-  }catch(err){ console.error('Google init error:', err); }
+  }catch(err){ console.error('Firebase init error:', err); }
 }
-window.addEventListener('load', ()=> setTimeout(initGoogleAuth, 400));
+window.addEventListener('load', ()=> setTimeout(initFirebase, 400));
 
-function onGoogleSignInClick(){
-  if(!isGoogleConfigured()){ openModal('googleSetupOverlay'); return; }
-  if(typeof google==='undefined' || !google.accounts){
-    toast('Google sign-in script hasn\'t loaded — check your internet connection and reload');
+function onFirebaseSignInClick(){
+  if(!isFirebaseConfigured()){ openModal('firebaseSetupOverlay'); return; }
+  if(typeof firebase==='undefined'){
+    toast('Firebase script hasn\'t loaded — check your internet connection and reload');
     return;
   }
-  google.accounts.id.prompt();
-  if(driveTokenClient) driveTokenClient.requestAccessToken();
+  const provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider).catch(err=>{
+    console.error(err);
+    toast('Sign-in failed: '+err.message);
+  });
 }
-function signOutGoogle(){
-  googleProfile = null; driveAccessToken = null;
-  if(typeof google!=='undefined' && google.accounts) google.accounts.id.disableAutoSelect();
-  updateGoogleUI();
-  toast('Signed out of Google');
+function signOutFirebase(){
+  if(typeof firebase==='undefined') return;
+  firebase.auth().signOut();
+  toast('Signed out');
 }
-function updateGoogleUI(){
+function updateFirebaseUI(){
   const nameEl = document.getElementById('chipName');
   const roleEl = document.getElementById('chipRole');
   const avatarEl = document.getElementById('chipAvatar');
-  const signBtn = document.getElementById('googleSignInBtn');
-  const signOutBtn = document.getElementById('googleSignOutBtn');
-  if(googleProfile){
-    nameEl.textContent = googleProfile.name;
-    roleEl.textContent = googleProfile.email;
-    avatarEl.innerHTML = `<img src="${googleProfile.picture}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+  const signBtn = document.getElementById('firebaseSignInBtn');
+  const signOutBtn = document.getElementById('firebaseSignOutBtn');
+  if(firebaseUser){
+    nameEl.textContent = firebaseUser.displayName || firebaseUser.email;
+    roleEl.textContent = firebaseUser.email || '';
+    avatarEl.innerHTML = firebaseUser.photoURL
+      ? `<img src="${firebaseUser.photoURL}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
+      : (firebaseUser.displayName||'?')[0].toUpperCase();
     signBtn.style.display = 'none';
     signOutBtn.style.display = 'flex';
   } else {
@@ -1331,71 +1326,42 @@ function updateGoogleUI(){
     signBtn.style.display = 'flex';
     signOutBtn.style.display = 'none';
   }
-  const driveReady = !!driveAccessToken;
-  document.getElementById('driveSaveBtn').classList.toggle('disabled-icon', !driveReady);
-  document.getElementById('driveLoadBtn').classList.toggle('disabled-icon', !driveReady);
+  const cloudReady = !!firebaseUser;
+  document.getElementById('cloudSaveBtn').classList.toggle('disabled-icon', !cloudReady);
+  document.getElementById('cloudLoadBtn').classList.toggle('disabled-icon', !cloudReady);
 }
 
-/* ---- Drive file save/load. Uses the drive.file scope, so this app can only ever
-   see/write the one file it creates for itself — never the rest of your Drive. ---- */
-async function driveFindFile(){
-  const q = encodeURIComponent(`name='${DRIVE_FILE_NAME}' and trashed=false`);
-  const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name)`, {
-    headers:{Authorization:'Bearer '+driveAccessToken}
-  });
-  if(!res.ok) throw new Error('Drive lookup failed (HTTP '+res.status+')');
-  const data = await res.json();
-  return (data.files && data.files[0]) || null;
-}
-async function saveToGoogleDrive(){
-  if(!driveAccessToken){ toast('Sign in with Google and connect Drive first'); return; }
+/* ---- Firestore save/load. Each signed-in user's data lives at
+   yashFinancePortals/{their uid} — set Firestore security rules so only that
+   uid can read/write its own document (see the setup guide for the rule). ---- */
+async function saveToFirestore(){
+  if(!firebaseUser){ toast('Sign in first to save to the cloud'); return; }
   try{
-    const existing = await driveFindFile();
-    const content = JSON.stringify(buildPortalExportObject(), null, 2);
-    const boundary = 'yashfinance'+Date.now();
-    const metaPart = existing ? {} : {name:DRIVE_FILE_NAME, mimeType:'application/json'};
-    const body =
-      '--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(metaPart)+'\r\n'+
-      '--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+content+'\r\n'+
-      '--'+boundary+'--';
-    const url = existing
-      ? 'https://www.googleapis.com/upload/drive/v3/files/'+existing.id+'?uploadType=multipart'
-      : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
-    const res = await fetch(url, {
-      method: existing ? 'PATCH' : 'POST',
-      headers:{Authorization:'Bearer '+driveAccessToken, 'Content-Type':'multipart/related; boundary='+boundary},
-      body
-    });
-    if(!res.ok) throw new Error('Drive save failed (HTTP '+res.status+')');
-    toast('Saved to Google Drive as "'+DRIVE_FILE_NAME+'"');
+    await firestoreDb.collection(FIRESTORE_COLLECTION).doc(firebaseUser.uid).set(buildPortalExportObject());
+    toast('Saved to your Firebase account');
   }catch(err){
     console.error(err);
-    toast('Drive save failed: '+err.message);
+    toast('Cloud save failed: '+err.message);
   }
 }
-async function loadFromGoogleDrive(){
-  if(!driveAccessToken){ toast('Sign in with Google and connect Drive first'); return; }
+async function loadFromFirestore(){
+  if(!firebaseUser){ toast('Sign in first to load from the cloud'); return; }
   try{
-    const existing = await driveFindFile();
-    if(!existing){ toast('No saved file found in Drive yet — use the save icon first'); return; }
-    const res = await fetch('https://www.googleapis.com/drive/v3/files/'+existing.id+'?alt=media', {
-      headers:{Authorization:'Bearer '+driveAccessToken}
-    });
-    if(!res.ok) throw new Error('Drive fetch failed (HTTP '+res.status+')');
-    const data = await res.json();
-    if(!applyPortalJSONImport(data)){ toast('Drive file format not recognized'); return; }
-    toast('Loaded from Google Drive');
+    const snap = await firestoreDb.collection(FIRESTORE_COLLECTION).doc(firebaseUser.uid).get();
+    if(!snap.exists){ toast('No saved data found yet — use the save icon first'); return; }
+    if(!applyPortalJSONImport(snap.data())){ toast('Saved data format not recognized'); return; }
+    toast('Loaded from your Firebase account');
   }catch(err){
     console.error(err);
-    toast('Drive load failed: '+err.message);
+    toast('Cloud load failed: '+err.message);
   }
 }
-document.getElementById('googleSignInBtn').addEventListener('click', onGoogleSignInClick);
-document.getElementById('googleSignOutBtn').addEventListener('click', signOutGoogle);
-document.getElementById('googleSetupInfoBtn').addEventListener('click', ()=> openModal('googleSetupOverlay'));
-document.getElementById('driveSaveBtn').addEventListener('click', saveToGoogleDrive);
-document.getElementById('driveLoadBtn').addEventListener('click', loadFromGoogleDrive);
-updateGoogleUI();
+document.getElementById('firebaseSignInBtn').addEventListener('click', onFirebaseSignInClick);
+document.getElementById('firebaseSignOutBtn').addEventListener('click', signOutFirebase);
+document.getElementById('firebaseSetupInfoBtn').addEventListener('click', ()=> openModal('firebaseSetupOverlay'));
+document.getElementById('cloudSaveBtn').addEventListener('click', saveToFirestore);
+document.getElementById('cloudLoadBtn').addEventListener('click', loadFromFirestore);
+updateFirebaseUI();
 
 /* ================= INIT ================= */
 renderChart();

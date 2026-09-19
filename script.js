@@ -454,10 +454,11 @@ function renderSnapshots(){
     const change = prev ? total-assetTotal(prev) : null;
     const expRow = expenseRowsData.find(e=>e.month===r.month);
     const expenses = expRow ? rowTotal(expRow) : null;
+    const income = incomeTotalForMonth(r.month);
     return `
     <tr class="${r._new?'new-row':''}">
       <td>${getMonthDisplay(r.month)}</td>
-      <td>${r.income ? inr(r.income) : '<span class="muted">—</span>'}</td>
+      <td>${income ? inr(income) : '<span class="muted">—</span>'}</td>
       <td>${expenses!==null ? inr(expenses) : '<span class="muted">—</span>'}</td>
       <td style="font-weight:700;">${inr(total)}</td>
       <td style="text-align:right;">${change===null ? '<span class="muted">—</span>' : `<span class="pill ${change>=0?'under':'over'}">${change>=0?'↑':'↓'} ${inr(Math.abs(change))}</span>`}</td>
@@ -565,7 +566,7 @@ document.getElementById('assetYearNext').addEventListener('click', ()=>{
 /* ================= EXPENSE & INCOME ================= */
 function renderExpenseTableHead(){
   const head = document.getElementById('expenseTableHead');
-  head.innerHTML = `<th class="col-check"><input type="checkbox" class="headchk" id="expHeadChk"></th><th style="text-align:left;">Month</th>` +
+  head.innerHTML = `<th class="col-check"><input type="checkbox" class="headchk" id="expHeadChk"></th><th style="text-align:left;">Month</th><th>Income</th>` +
     masterCategories.map(c=>`<th>${c.label}</th>`).join('') +
     '<th>Budget Amount</th><th>Total Expense</th><th style="text-align:right;">Difference</th><th class="col-actions">Actions</th>';
 }
@@ -580,7 +581,7 @@ function renderExpenses(){
   pg.page = state.page;
 
   const body = document.getElementById('expenseBody');
-  const colCount = masterCategories.length + 6;
+  const colCount = masterCategories.length + 7;
   body.innerHTML = pg.slice.map(r=>{
     const budgetRow = budgetForMonth(r.month);
     const budget = rowTotal(budgetRow);
@@ -592,6 +593,7 @@ function renderExpenses(){
     <tr class="${r._new?'new-row':''}" data-id="${r._id}">
       <td class="col-check"><input type="checkbox" class="rowchk" ${checked}></td>
       <td>${getMonthDisplay(r.month)}</td>
+      <td>${inr(incomeTotalForMonth(r.month))}</td>
       ${masterCategories.map(c=>`<td>${inr(r.values[c.key]||0)}</td>`).join('')}
       <td>${inr(budget)}</td>
       <td style="font-weight:700;">${inr(total)}</td>
@@ -662,7 +664,7 @@ document.getElementById('expYearNext').addEventListener('click', ()=>{
 /* ================= BUDGET ================= */
 function renderBudgetTableHead(){
   const head = document.getElementById('budgetTableHead');
-  head.innerHTML = `<th class="col-check"><input type="checkbox" class="headchk" id="budHeadChk"></th><th style="text-align:left;">Month</th>` +
+  head.innerHTML = `<th class="col-check"><input type="checkbox" class="headchk" id="budHeadChk"></th><th style="text-align:left;">Month</th><th>Income</th>` +
     masterCategories.map(c=>`<th>${c.label}</th>`).join('') + '<th>Total</th><th class="col-actions">Actions</th>';
 }
 function renderBudget(){
@@ -676,13 +678,14 @@ function renderBudget(){
   pg.page = state.page;
 
   const body = document.getElementById('budgetBody');
-  const colCount = masterCategories.length + 4;
+  const colCount = masterCategories.length + 5;
   body.innerHTML = pg.slice.map(r=>{
     const checked = state.selected.has(r._id) ? 'checked' : '';
     return `
     <tr class="${r._new?'new-row':''}" data-id="${r._id}">
       <td class="col-check"><input type="checkbox" class="rowchk" ${checked}></td>
       <td>${getMonthDisplay(r.month)}</td>
+      <td>${inr(incomeTotalForMonth(r.month))}</td>
       ${masterCategories.map(c=>`<td>${inr(r.values[c.key]||0)}</td>`).join('')}
       <td style="font-weight:700;">${inr(rowTotal(r))}</td>
       <td class="col-actions">${actionIcons()}</td>
@@ -782,7 +785,6 @@ document.getElementById('openAssetModal').addEventListener('click', ()=>{
   const month = defaultNextMonth(assetRows);
   document.getElementById('af_month').value = month;
   document.getElementById('assetModalMonthLabel').textContent = month;
-  document.getElementById('af_income').value = '';
   renderAssetFields({});
   openModal('assetOverlay');
 });
@@ -793,25 +795,23 @@ function openAssetEditModal(id){
   document.getElementById('assetModalTitle').textContent = 'Edit Asset Allocation';
   document.getElementById('af_month').value = row.month;
   document.getElementById('assetModalMonthLabel').textContent = row.month;
-  document.getElementById('af_income').value = row.income ? row.income : '';
   renderAssetFields(row);
   openModal('assetOverlay');
 }
 document.getElementById('assetSaveBtn').addEventListener('click', ()=>{
   const month = document.getElementById('af_month').value.trim() || defaultNextMonth(assetRows);
-  const income = parseAmount(document.getElementById('af_income').value);
   const values = {};
   document.querySelectorAll('#assetFieldsWrap .asset-field-row').forEach(row=>{
     values[row.dataset.key] = parseAmount(row.querySelector('.af-add').value);
   });
   if(editingAssetId){
     const row = assetRows.find(r=>r._id===editingAssetId);
-    Object.assign(row, values, {month, income});
+    Object.assign(row, values, {month});
     assetRows.sort((a,b)=>monthIndex(a.month)-monthIndex(b.month));
     toast('Asset allocation for '+month+' updated');
   } else {
     assetRows.forEach(r=>r._new=false);
-    const newRow = Object.assign({month, income, _new:true, _id:newId('a')}, values);
+    const newRow = Object.assign({month, _new:true, _id:newId('a')}, values);
     assetRows.push(newRow);
     assetRows.sort((a,b)=>monthIndex(a.month)-monthIndex(b.month));
     toast('Asset allocation for '+month+' saved');
@@ -822,26 +822,57 @@ document.getElementById('assetSaveBtn').addEventListener('click', ()=>{
   closeModal('assetOverlay');
 });
 
+/* ---- Income: a separate per-month record, shared between the Expense & Budget modals ----
+   Max 2 sources per month (default first one is named "Yash", but the name is editable). */
+let incomeRowsData = []; /* {month, sources:[{name,amount}], _id} */
+function getIncomeForMonth(month){ return incomeRowsData.find(r=>r.month===month); }
+function incomeTotalForMonth(month){
+  const r = getIncomeForMonth(month);
+  return r ? r.sources.reduce((a,s)=>a+(s.amount||0),0) : 0;
+}
+function defaultIncomeSources(){ return [{name:'Yash', amount:0}]; }
+function loadIncomeSourcesForModal(month){
+  const rec = getIncomeForMonth(month);
+  modalIncomeSources = rec ? rec.sources.map(s=>({...s})) : defaultIncomeSources();
+}
+function saveIncomeForMonth(month){
+  const cleaned = modalIncomeSources.map(s=>({name:(s.name||'').trim()||'Income', amount:s.amount||0}));
+  const existing = incomeRowsData.find(r=>r.month===month);
+  if(existing) existing.sources = cleaned;
+  else incomeRowsData.push({month, sources:cleaned, _id:newId('i')});
+  incomeRowsData.sort((a,b)=>monthIndex(a.month)-monthIndex(b.month));
+}
+
+/* ---- Shared income-rows editor, rendered inside both the Expense modal and the Budget modal ---- */
+let modalIncomeSources = [];
+function renderIncomeSourceRows(wrapId, addBtnId, totalElId){
+  const wrap = document.getElementById(wrapId);
+  wrap.innerHTML = modalIncomeSources.map((s,i)=>`
+    <div class="field-row">
+      <div class="field"><label>Name</label><input type="text" data-inc-name="${i}" value="${s.name}" placeholder="Income source"></div>
+      <div class="field"><label>Amount</label><div class="amount-field"><span class="rupee">₹</span><input type="text" data-inc-amt="${i}" value="${s.amount||0}"></div></div>
+      <button class="row-del" ${modalIncomeSources.length<=1?'disabled':''} data-inc-del="${i}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('[data-inc-name]').forEach(inp=>inp.addEventListener('input', e=>{ modalIncomeSources[e.target.dataset.incName].name = e.target.value; }));
+  wrap.querySelectorAll('[data-inc-amt]').forEach(inp=>inp.addEventListener('input', e=>{
+    modalIncomeSources[e.target.dataset.incAmt].amount = parseAmount(e.target.value);
+    document.getElementById(totalElId).textContent = inr(modalIncomeSources.reduce((a,s)=>a+(s.amount||0),0));
+  }));
+  wrap.querySelectorAll('[data-inc-del]').forEach(btn=>btn.addEventListener('click', e=>{
+    if(modalIncomeSources.length<=1) return;
+    modalIncomeSources.splice(e.currentTarget.dataset.incDel,1);
+    renderIncomeSourceRows(wrapId, addBtnId, totalElId);
+    document.getElementById(totalElId).textContent = inr(modalIncomeSources.reduce((a,s)=>a+(s.amount||0),0));
+  }));
+  document.getElementById(addBtnId).style.display = modalIncomeSources.length>=2 ? 'none' : 'inline-flex';
+  document.getElementById(totalElId).textContent = inr(modalIncomeSources.reduce((a,s)=>a+(s.amount||0),0));
+}
+
 /* ---- Add Income & Expense modal ---- */
-let incomeItems = [];
 let modalExpenseValues = {}; /* key -> amount, for the month being added */
 let modalNewCustomRows = []; /* {label, amount} not-yet-in-master rows added this session */
 
-function renderIncomeRows(){
-  const wrap = document.getElementById('incomeRows');
-  wrap.innerHTML = incomeItems.map((it,i)=>`
-    <div class="field-row">
-      <div class="field"><label>Source</label><input type="text" data-inc-src="${i}" value="${it.source}"></div>
-      <div class="field"><label>Amount</label><div class="amount-field"><span class="rupee">₹</span><input type="text" data-inc-amt="${i}" value="${it.amount.toLocaleString('en-IN')}"></div></div>
-      <button class="row-del" data-inc-del="${i}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
-    </div>
-  `).join('');
-  wrap.querySelectorAll('[data-inc-src]').forEach(inp=>inp.addEventListener('input', e=>{ incomeItems[e.target.dataset.incSrc].source = e.target.value; }));
-  wrap.querySelectorAll('[data-inc-amt]').forEach(inp=>inp.addEventListener('input', e=>{ incomeItems[e.target.dataset.incAmt].amount = parseAmount(e.target.value); updateIncomeExpenseTotals(); }));
-  wrap.querySelectorAll('[data-inc-del]').forEach(btn=>btn.addEventListener('click', e=>{
-    incomeItems.splice(e.currentTarget.dataset.incDel,1); renderIncomeRows(); updateIncomeExpenseTotals();
-  }));
-}
 function renderExpenseRowsModal(){
   const wrap = document.getElementById('expenseRows');
   let html = '';
@@ -876,15 +907,15 @@ function renderExpenseRowsModal(){
   }));
 }
 function updateIncomeExpenseTotals(){
-  const incTotal = incomeItems.reduce((a,b)=>a+b.amount,0);
   let expTotal = 0;
   masterCategories.forEach(c=> expTotal += (modalExpenseValues[c.key]||0));
   modalNewCustomRows.forEach(it=> expTotal += (it.amount||0));
-  document.getElementById('incomeTotal').textContent = inr(incTotal);
   document.getElementById('expenseTotal').textContent = inr(expTotal);
 }
 document.getElementById('addIncomeRow').addEventListener('click', ()=>{
-  incomeItems.push({source:'', amount:0}); renderIncomeRows(); updateIncomeExpenseTotals();
+  if(modalIncomeSources.length>=2) return;
+  modalIncomeSources.push({name:'', amount:0});
+  renderIncomeSourceRows('incomeRows','addIncomeRow','incomeTotal');
 });
 document.getElementById('addExpenseRow').addEventListener('click', ()=>{
   modalNewCustomRows.push({label:'', amount:0}); renderExpenseRowsModal(); updateIncomeExpenseTotals();
@@ -899,7 +930,8 @@ document.getElementById('openExpenseModal').addEventListener('click', ()=>{
   modalExpenseValues = {};
   masterCategories.forEach(c=> modalExpenseValues[c.key]=0);
   modalNewCustomRows = [];
-  renderIncomeRows(); renderExpenseRowsModal(); updateIncomeExpenseTotals();
+  loadIncomeSourcesForModal(nextMonth);
+  renderIncomeSourceRows('incomeRows','addIncomeRow','incomeTotal'); renderExpenseRowsModal(); updateIncomeExpenseTotals();
   openModal('expenseOverlay');
 });
 function openExpenseEditModal(id){
@@ -912,7 +944,8 @@ function openExpenseEditModal(id){
   modalExpenseValues = {};
   masterCategories.forEach(c=> modalExpenseValues[c.key] = row.values[c.key]||0);
   modalNewCustomRows = [];
-  renderIncomeRows(); renderExpenseRowsModal(); updateIncomeExpenseTotals();
+  loadIncomeSourcesForModal(row.month);
+  renderIncomeSourceRows('incomeRows','addIncomeRow','incomeTotal'); renderExpenseRowsModal(); updateIncomeExpenseTotals();
   openModal('expenseOverlay');
 }
 document.getElementById('exp_month').addEventListener('input', e=>{
@@ -943,6 +976,7 @@ document.getElementById('expenseSaveBtn').addEventListener('click', ()=>{
     if(existingIdx>-1) expenseRowsData[existingIdx]=newRow; else { expenseRowsData.push(newRow); expenseRowsData.sort((a,b)=>monthIndex(a.month)-monthIndex(b.month)); }
     toast('Income & expense for '+monthKey+' saved');
   }
+  saveIncomeForMonth(monthKey);
 
   renderExpenses();
   renderBudget();
@@ -1013,14 +1047,22 @@ document.getElementById('confirmDeleteCategoryBtn').addEventListener('click', ()
 document.getElementById('addBudgetRow').addEventListener('click', ()=>{
   modalBudgetNewRows.push({label:'', amount:0}); renderBudgetRowsModal();
 });
+document.getElementById('addBudgetIncomeRow').addEventListener('click', ()=>{
+  if(modalIncomeSources.length>=2) return;
+  modalIncomeSources.push({name:'', amount:0});
+  renderIncomeSourceRows('budIncomeRows','addBudgetIncomeRow','budIncomeTotal');
+});
 let editingBudgetId = null;
 document.getElementById('openBudgetModal').addEventListener('click', ()=>{
   editingBudgetId = null;
   document.getElementById('budgetModalTitle').textContent = 'Add New Budget';
-  document.getElementById('bf_month').value = defaultNextMonth(budgetRowsData);
+  const nextBudMonth = defaultNextMonth(budgetRowsData);
+  document.getElementById('bf_month').value = nextBudMonth;
   modalBudgetValues = {};
   masterCategories.forEach(c=> modalBudgetValues[c.key]=0);
   modalBudgetNewRows = [];
+  loadIncomeSourcesForModal(nextBudMonth);
+  renderIncomeSourceRows('budIncomeRows','addBudgetIncomeRow','budIncomeTotal');
   renderBudgetRowsModal();
   openModal('budgetOverlay');
 });
@@ -1033,6 +1075,8 @@ function openBudgetEditModal(id){
   modalBudgetValues = {};
   masterCategories.forEach(c=> modalBudgetValues[c.key] = row.values[c.key]||0);
   modalBudgetNewRows = [];
+  loadIncomeSourcesForModal(row.month);
+  renderIncomeSourceRows('budIncomeRows','addBudgetIncomeRow','budIncomeTotal');
   renderBudgetRowsModal();
   openModal('budgetOverlay');
 }
@@ -1061,9 +1105,11 @@ document.getElementById('budgetSaveBtn').addEventListener('click', ()=>{
     if(existingIdx>-1) budgetRowsData[existingIdx]=newRow; else { budgetRowsData.push(newRow); budgetRowsData.sort((a,b)=>monthIndex(a.month)-monthIndex(b.month)); }
     toast('Budget for '+month+' saved — new categories are now available in Expense & Income too');
   }
+  saveIncomeForMonth(month);
 
   renderBudget();
   renderExpenses();
+  renderSnapshots();
   closeModal('budgetOverlay');
 });
 
@@ -1206,7 +1252,7 @@ function buildPortalExportObject(){
     type:'yash-finance-full-export',
     exportedAt: new Date().toISOString(),
     masterCategories,
-    incomeItems,
+    incomeRowsData: incomeRowsData.map(({_id,...rest})=>rest),
     assetRows: assetRows.map(({_id,_new,...rest})=>rest),
     expenseRowsData: expenseRowsData.map(({_id,_new,...rest})=>rest),
     budgetRowsData: budgetRowsData.map(({_id,_new,...rest})=>rest),
@@ -1215,7 +1261,10 @@ function buildPortalExportObject(){
 function applyPortalJSONImport(data){
   if(!data || typeof data!=='object') return false;
   if(Array.isArray(data.masterCategories)) masterCategories = data.masterCategories;
-  if(Array.isArray(data.incomeItems)) incomeItems = data.incomeItems;
+  if(Array.isArray(data.incomeRowsData)){
+    incomeRowsData = data.incomeRowsData.map(r=> Object.assign({_id:newId('i')}, r));
+    incomeRowsData.sort((a,b)=>monthIndex(a.month)-monthIndex(b.month));
+  }
   if(Array.isArray(data.assetRows)){
     assetRows = data.assetRows.map(r=> Object.assign({_id:newId('a')}, r));
     assetRows.sort((a,b)=>monthIndex(a.month)-monthIndex(b.month));

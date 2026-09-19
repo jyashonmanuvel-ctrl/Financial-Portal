@@ -342,12 +342,6 @@
         <input type="text" id="af_month">
       </div>
       <div id="assetFieldsWrap"></div>
-      <div class="section-block">
-        <div class="field-row" style="grid-template-columns:1fr 1fr;">
-          <div class="field"><label>Income for this month</label></div>
-          <div class="field"><div class="amount-field"><span class="rupee">₹</span><input type="text" id="af_income" placeholder="0"></div></div>
-        </div>
-      </div>
     </div>
     <div class="modal-foot">
       <button class="save-btn" id="assetSaveBtn">Save</button>
@@ -431,6 +425,20 @@
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
         Add New Category
       </button>
+
+      <div class="section-block">
+        <div class="section-head">
+          <div class="section-title"><span class="ic income">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>
+          </span>Income</div>
+          <div class="section-total income"><div class="k">Total Income</div><div class="v" id="budIncomeTotal">₹0</div></div>
+        </div>
+        <div id="budIncomeRows"></div>
+        <button class="add-link" id="addBudgetIncomeRow">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
+          Add Income
+        </button>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="save-btn" id="budgetSaveBtn">Save</button>

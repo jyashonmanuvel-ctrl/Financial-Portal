@@ -1,4 +1,4 @@
-  :root{
+:root{
     --indigo-600:#4F46E5;
     --indigo-700:#4338CA;
     --indigo-500:#6C63F7;
@@ -80,6 +80,19 @@
   .avatar{width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#8B7FFB,#4F46E5); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13.5px; font-family:'DM Sans',sans-serif; overflow:hidden;}
   .user-chip .name{font-size:13.5px; font-weight:700; line-height:1.2;}
   .user-chip .role{font-size:11.5px; color:var(--text-faint); line-height:1.2;}
+
+  /* Profile chip dropdown (sign-out lives here) */
+  .user-chip-wrap{position:relative;}
+  .user-chip{border:none; background:none; cursor:pointer; font-family:inherit; border-radius:10px; padding:4px 6px;}
+  .user-chip:hover{background:var(--indigo-50);}
+  .user-chip .name, .user-chip .role{text-align:left;}
+  .chip-caret{color:var(--text-faint); margin-left:2px; transition:transform .15s;}
+  .user-chip-wrap.open .chip-caret{transform:rotate(180deg);}
+  .chip-menu{position:absolute; top:calc(100% + 8px); right:0; min-width:220px; background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:0 20px 40px -16px rgba(20,10,60,.3); padding:6px; display:none; z-index:30;}
+  .user-chip-wrap.open .chip-menu{display:block;}
+  .chip-menu-item{display:flex; align-items:center; gap:10px; width:100%; padding:10px 12px; border:none; background:none; border-radius:8px; font-size:13.5px; font-weight:600; color:var(--text); cursor:pointer; font-family:inherit; text-align:left;}
+  .chip-menu-item:hover{background:var(--red-bg); color:var(--red);}
+  .chip-menu-note{padding:10px 12px; font-size:12px; color:var(--text-faint); line-height:1.5;}
 
   /* Google sign-in (via Firebase) + cloud save */
   .header-divider{width:1px; align-self:stretch; background:var(--border); margin:2px 2px;}

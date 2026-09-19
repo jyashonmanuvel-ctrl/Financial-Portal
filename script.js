@@ -457,11 +457,12 @@ function renderSnapshots(){
     return `
     <tr class="${r._new?'new-row':''}">
       <td>${getMonthDisplay(r.month)}</td>
+      <td>${r.income ? inr(r.income) : '<span class="muted">—</span>'}</td>
       <td>${expenses!==null ? inr(expenses) : '<span class="muted">—</span>'}</td>
       <td style="font-weight:700;">${inr(total)}</td>
       <td style="text-align:right;">${change===null ? '<span class="muted">—</span>' : `<span class="pill ${change>=0?'under':'over'}">${change>=0?'↑':'↓'} ${inr(Math.abs(change))}</span>`}</td>
     </tr>`;
-  }).join('') || `<tr><td colspan="4" style="text-align:center; color:var(--text-faint); padding:28px;">No snapshots yet — add one from Asset Allocation</td></tr>`;
+  }).join('') || `<tr><td colspan="5" style="text-align:center; color:var(--text-faint); padding:28px;">No snapshots yet — add one from Asset Allocation</td></tr>`;
 
   renderPagination('snapPgInfo','snapPgControls', pg, (p)=>{ state.page=p; renderSnapshots(); });
   scheduleCloudSave();
@@ -781,6 +782,7 @@ document.getElementById('openAssetModal').addEventListener('click', ()=>{
   const month = defaultNextMonth(assetRows);
   document.getElementById('af_month').value = month;
   document.getElementById('assetModalMonthLabel').textContent = month;
+  document.getElementById('af_income').value = '';
   renderAssetFields({});
   openModal('assetOverlay');
 });
@@ -791,23 +793,25 @@ function openAssetEditModal(id){
   document.getElementById('assetModalTitle').textContent = 'Edit Asset Allocation';
   document.getElementById('af_month').value = row.month;
   document.getElementById('assetModalMonthLabel').textContent = row.month;
+  document.getElementById('af_income').value = row.income ? row.income : '';
   renderAssetFields(row);
   openModal('assetOverlay');
 }
 document.getElementById('assetSaveBtn').addEventListener('click', ()=>{
   const month = document.getElementById('af_month').value.trim() || defaultNextMonth(assetRows);
+  const income = parseAmount(document.getElementById('af_income').value);
   const values = {};
   document.querySelectorAll('#assetFieldsWrap .asset-field-row').forEach(row=>{
     values[row.dataset.key] = parseAmount(row.querySelector('.af-add').value);
   });
   if(editingAssetId){
     const row = assetRows.find(r=>r._id===editingAssetId);
-    Object.assign(row, values, {month});
+    Object.assign(row, values, {month, income});
     assetRows.sort((a,b)=>monthIndex(a.month)-monthIndex(b.month));
     toast('Asset allocation for '+month+' updated');
   } else {
     assetRows.forEach(r=>r._new=false);
-    const newRow = Object.assign({month, _new:true, _id:newId('a')}, values);
+    const newRow = Object.assign({month, income, _new:true, _id:newId('a')}, values);
     assetRows.push(newRow);
     assetRows.sort((a,b)=>monthIndex(a.month)-monthIndex(b.month));
     toast('Asset allocation for '+month+' saved');
@@ -959,7 +963,7 @@ function renderBudgetRowsModal(){
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
         ${c.label}</div></div>
       <div class="field"><label>Amount</label><div class="amount-field"><span class="rupee">₹</span><input type="text" data-bmc-amt="${c.key}" value="${modalBudgetValues[c.key]||0}"></div></div>
-      <button class="row-del" disabled></button>
+      <button class="row-del" data-del-master-cat="${c.key}" title="Remove category"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>`;
   });
   modalBudgetNewRows.forEach((it,i)=>{
@@ -977,7 +981,35 @@ function renderBudgetRowsModal(){
   wrap.querySelectorAll('[data-bnew-del]').forEach(btn=>btn.addEventListener('click', e=>{
     modalBudgetNewRows.splice(e.currentTarget.dataset.bnewDel,1); renderBudgetRowsModal();
   }));
+  wrap.querySelectorAll('[data-del-master-cat]').forEach(btn=>btn.addEventListener('click', e=>{
+    openDeleteCategoryConfirm(e.currentTarget.dataset.delMasterCat);
+  }));
 }
+
+/* ---- Remove a category from the shared master list (Budget + Monthly Expense) ---- */
+let pendingDeleteCategoryKey = null;
+function openDeleteCategoryConfirm(key){
+  const cat = masterCategories.find(c=>c.key===key);
+  if(!cat) return;
+  pendingDeleteCategoryKey = key;
+  document.getElementById('confirmDeleteCategoryText').textContent = `Remove "${cat.label}"? This removes it from Budget and Monthly Expense going forward.`;
+  openModal('confirmDeleteCategoryOverlay');
+}
+document.getElementById('confirmDeleteCategoryBtn').addEventListener('click', ()=>{
+  if(!pendingDeleteCategoryKey) return;
+  const key = pendingDeleteCategoryKey;
+  const cat = masterCategories.find(c=>c.key===key);
+  masterCategories = masterCategories.filter(c=>c.key!==key);
+  delete modalBudgetValues[key];
+  delete modalExpenseValues[key];
+  pendingDeleteCategoryKey = null;
+  closeModal('confirmDeleteCategoryOverlay');
+  renderBudgetRowsModal();
+  renderBudget();
+  renderExpenses();
+  scheduleCloudSave();
+  toast(`"${cat ? cat.label : 'Category'}" removed`);
+});
 document.getElementById('addBudgetRow').addEventListener('click', ()=>{
   modalBudgetNewRows.push({label:'', amount:0}); renderBudgetRowsModal();
 });
@@ -1328,7 +1360,8 @@ function updateFirebaseUI(){
   const roleEl = document.getElementById('chipRole');
   const avatarEl = document.getElementById('chipAvatar');
   const signBtn = document.getElementById('firebaseSignInBtn');
-  const signOutBtn = document.getElementById('firebaseSignOutBtn');
+  const chipSignOutBtn = document.getElementById('chipSignOutBtn');
+  const chipSignedOutNote = document.getElementById('chipSignedOutNote');
   if(firebaseUser){
     nameEl.textContent = firebaseUser.displayName || firebaseUser.email;
     roleEl.textContent = firebaseUser.email || '';
@@ -1336,17 +1369,16 @@ function updateFirebaseUI(){
       ? `<img src="${firebaseUser.photoURL}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
       : (firebaseUser.displayName||'?')[0].toUpperCase();
     signBtn.style.display = 'none';
-    signOutBtn.style.display = 'flex';
+    chipSignOutBtn.style.display = 'flex';
+    chipSignedOutNote.style.display = 'none';
   } else {
     nameEl.textContent = 'Anitha';
     roleEl.textContent = 'Admin';
     avatarEl.textContent = 'AN';
     signBtn.style.display = 'flex';
-    signOutBtn.style.display = 'none';
+    chipSignOutBtn.style.display = 'none';
+    chipSignedOutNote.style.display = 'block';
   }
-  const cloudReady = !!firebaseUser;
-  document.getElementById('cloudSaveBtn').classList.toggle('disabled-icon', !cloudReady);
-  document.getElementById('cloudLoadBtn').classList.toggle('disabled-icon', !cloudReady);
 }
 
 /* ---- Firestore save/load. Each signed-in user's data lives at
@@ -1378,10 +1410,23 @@ async function loadFromFirestore(silent){
   }
 }
 document.getElementById('firebaseSignInBtn').addEventListener('click', onFirebaseSignInClick);
-document.getElementById('firebaseSignOutBtn').addEventListener('click', signOutFirebase);
 document.getElementById('firebaseSetupInfoBtn').addEventListener('click', ()=> openModal('firebaseSetupOverlay'));
-document.getElementById('cloudSaveBtn').addEventListener('click', ()=> saveToFirestore());
-document.getElementById('cloudLoadBtn').addEventListener('click', ()=> loadFromFirestore());
+
+/* ---- Profile chip dropdown (Sign out lives here now) ---- */
+const chipWrap = document.querySelector('.user-chip-wrap');
+document.getElementById('userChipBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  chipWrap.classList.toggle('open');
+});
+document.getElementById('chipSignOutBtn').addEventListener('click', ()=>{
+  chipWrap.classList.remove('open');
+  signOutFirebase();
+});
+document.addEventListener('click', (e)=>{
+  if(chipWrap.classList.contains('open') && !chipWrap.contains(e.target)) chipWrap.classList.remove('open');
+});
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') chipWrap.classList.remove('open'); });
+
 updateFirebaseUI();
 
 /* ================= INIT ================= */
